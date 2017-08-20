@@ -76,3 +76,8 @@
             ((symbol-function 'y-or-n-p) #'(lambda (msg) t)))
     (epa-decrypt-armor-in-region (car extent) (cdr extent))))
 
+(defun spacemacs/notmuch-unread (&optional arg)
+  (interactive "P")
+  (notmuch-search (concat "( tag:flagged or tag:unread"
+                          (unless arg " and tag:inbox")
+                          " )")))

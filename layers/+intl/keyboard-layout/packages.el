@@ -449,11 +449,18 @@
     :common
     (progn
       (kl/evil-correct-keys 'evilified notmuch-show-mode-map
+        "h"
         "j"
         "k"
-        "J"
-        "K")
+        "l"
+        "N"
+        "n"
+        "C-N"
+        "C-n"
+        )
       (kl/evil-correct-keys 'evilified notmuch-search-mode-map
+        "n"
+        "N"
         "j"
         "k")
       )

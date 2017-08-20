@@ -19,11 +19,14 @@
   (use-package notmuch
     :defer t
     :init
-    (spacemacs/set-leader-keys "an" 'notmuch)
+    (progn
+      (spacemacs/set-leader-keys "an" 'spacemacs/notmuch-unread)
+      (spacemacs/set-leader-keys "aN" 'notmuch))
     :config
     (progn
       (dolist (prefix '(("ms" . "stash")
-                        ("mp" . "part")))
+                        ("mp" . "part")
+                        ("me" . "en-/decrypt")))
         (spacemacs/declare-prefix-for-mode 'notmuch-show-mode (car prefix) (cdr prefix)))
 
       (spacemacs/set-leader-keys-for-major-mode 'notmuch-show-mode
@@ -56,19 +59,17 @@
       (evilified-state-evilify-map notmuch-show-mode-map
         :mode notmuch-show-mode
         :bindings
-        "j" 'notmuch-show-next-open-message
-        "J" 'notmuch-show-next-message
-        "k" 'notmuch-show-previous-open-message
-        "K" 'notmuch-show-previous-message
-        "l" 'notmuch-show-filter-thread
+        "n" 'notmuch-show-next-open-message
+        "C-n" 'notmuch-show-next-message
+        "N" 'notmuch-show-previous-open-message
+        "C-N" 'notmuch-show-previous-message
+        "L" 'notmuch-show-filter-thread
+        "J" 'notmuch-jump-search
         )
 
-      (spacemacs/set-leader-keys-for-major-mode notmuch-show-mode-map
+      (spacemacs/set-leader-keys-for-major-mode 'notmuch-show-mode
+        "l" 'notmuch-show-filter-thread
         "j" 'notmuch-jump-search)
-      ;;   (kbd "J") 'notmuch-jump-search
-      ;;   (kbd "N") 'notmuch-show-next-message
-      ;;   (kbd "n") 'notmuch-show-next-open-message
-      ;;   (kbd "T") 'spacemacs/notmuch-trash-show)
 
       (evilified-state-evilify-map notmuch-search-mode-map
         :mode notmuch-search-mode
@@ -79,32 +80,21 @@
         "G" 'notmuch-search-last-thread
         "k" 'notmuch-search-previous-thread
         "j" 'notmuch-search-next-thread
+        "N" 'notmuch-search-previous-thread
+        "n" 'notmuch-search-next-thread
         )
-      ;; (evilified-state-evilify notmuch-tree-mode notmuch-tree-mode-map)
-      ;; (evilified-state-evilify notmuch-search-mode notmuch-search-mode-map
-      ;;   ;TODO: [[file:~/dotfiles/spacemacs/load-conf-files/notmuch.el][file:~/dotfiles/spacemacs/load-conf-files/notmuch.el]]
-      ;;   (kbd "a") 'spacemacs/notmuch-message-archive
-      ;;   (kbd "d") 'spacemacs/notmuch-message-delete-down
-      ;;   (kbd "D") 'spacemacs/notmuch-message-delete-up
-      ;;   (kbd "J") 'notmuch-jump-search
-      ;;   (kbd "L") 'notmuch-search-filter
-      ;;   (kbd "gg") 'notmuch-search-first-thread
-      ;;   (kbd "G") 'notmuch-search-last-thread
-      ;;   (kbd "T") 'spacemacs/notmuch-trash
-      ;;   (kbd "M") 'compose-mail-other-frame)
 
       (evil-define-key 'normal notmuch-search-mode-map
-        "F" 'spacemacs/notmuch-remove-inbox-tag)
+        "a" 'spacemacs/notmuch-message-archive
+        "d" 'spacemacs/notmuch-message-delete-down
+        "D" 'spacemacs/notmuch-message-delete-up
+        "M" 'compose-mail-other-frame)
 
       (evil-define-key 'visual notmuch-search-mode-map
         "*" 'notmuch-search-tag-all
         "a" 'notmuch-search-archive-thread
         "-" 'notmuch-search-remove-tag
-        "+" 'notmuch-search-add-tag
-        "F" '(lambda (&optional beg end)
-               "archive by removing inbox tag"
-               (interactive (notmuch-search-interactive-region))
-               (notmuch-search-tag (list "+archive" "-inbox") beg end)))
+        "+" 'notmuch-search-add-tag)
 
       (setq-default
        notmuch-search-oldest-first nil
@@ -153,31 +143,28 @@
       (add-to-list 'spacemacs-useful-buffers-regexp "\\*notmuch.+\\*")
 
       ;;; epa mail mode for decrypting inline PGP
-      (require 'epa-mail)
-      (defun turn-on-epa-mail-mode ()
-        (epa-mail-mode t))
-      (add-hook 'notmuch-show-hook 'turn-on-epa-mail-mode)
-      (add-hook 'message-mode-hook 'turn-on-epa-mail-mode)
+      ;; (require 'epa-mail)
+      ;; (defun turn-on-epa-mail-mode ()
+      ;;   (epa-mail-mode t))
+      ;; (add-hook 'notmuch-show-hook 'turn-on-epa-mail-mode)
+      ;; (add-hook 'message-mode-hook 'turn-on-epa-mail-mode)
 
       (spacemacs/set-leader-keys-for-minor-mode 'epa-mail-mode
-        "ed"  'spacemacs/notmuch-show-decrypt-message))
-      ))
+        "ed"  'spacemacs/notmuch-show-decrypt-message)
 
-(defun notmuch/pre-init-org ()
-  (spacemacs|use-package-add-hook org
-    :post-config
-    (progn
+      (setq notmuch-address-use-company nil
+            notmuch-address-command nil)
+      (bbdb-initialize 'gnus 'message)
+
       (defun turn-on-orgstruct-mode ()
         (orgstruct-mode t)
         (set (make-local-variable 'org-footnote-auto-label) 'plain)
         (local-set-key (kbd "C-c f") 'org-footnote-action))
 
-      (eval-after-load 'notmuch
-        (add-hook 'notmuch-show-hook 'turn-on-orgstruct-mode))
+      (add-hook 'notmuch-show-hook 'turn-on-orgstruct-mode)
       (add-hook 'message-mode-hook 'turn-on-orgstruct-mode)
+      )))
 
-      ;;; org-notmuch
-      (require 'org-notmuch))))
 
 (defun notmuch/init-helm-notmuch ()
   (use-package helm-notmuch
@@ -187,7 +174,16 @@
   (use-package bbdb
     :defer t
     :config
-    (progn)))
+    (progn
+      (setq bbdb-user-mail-address-re "jonas.hoersch@|coroa|hoersch@|jonas@chaoflow"
+            bbdb-file "~/notes/.bbdb"
+            bbdb-auto-revert t
+            bbdb-check-auto-save-file t
+            bbdb-expand-mail-aliases t
+            bbdb-complete-mail-allow-cycling t
+            bbdb-phone-style nil
+            bbdb-pop-up-window-size 10)
+      )))
 
 
 
