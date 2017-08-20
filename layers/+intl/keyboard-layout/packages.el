@@ -28,6 +28,7 @@
     magit
     mu4e
     neotree
+    notmuch
     org
     org-agenda
     ranger
@@ -438,6 +439,37 @@
     (kl/set-in-state (evil-get-auxiliary-keymap neotree-mode-map 'evilified)
                      "h" 'neotree-hidden-file-toggle
                      "k" 'neotree-rename-node)))
+
+(defun keyboard-layout/pre-init-notmuch ()
+  (kl|config notmuch
+    :description
+    "Remap `notmuch' bindings."
+    :loader
+    (spacemacs|use-package-add-hook notmuch :post-config BODY)
+    :common
+    (progn
+      (kl/evil-correct-keys 'evilified notmuch-show-mode-map
+        "j"
+        "k"
+        "J"
+        "K")
+      (kl/evil-correct-keys 'evilified notmuch-search-mode-map
+        "j"
+        "k")
+      )
+    :colemak-neio
+    (progn
+      ;; (kl/set-in-state (evil-get-auxiliary-keymap 'notmuch-search-mode-map 'evilified)
+      ;;   "l" 'notmuch-search-filter
+      ;;   "k" 'notmuch-tag-jump)
+      (evil-define-key 'evilified 'notmuch-search-mode-map
+        "j" 'notmuch-jump-search
+        "l" 'notmuch-search-filter
+        "k" 'notmuch-tag-jump)
+      (evil-define-key 'evilified 'notmuch-show-mode-map
+        "j" 'notmuch-jump-search
+        "k" 'notmuch-tag-jump)
+      )))
 
 (defun keyboard-layout/pre-init-org ()
   (kl|config org
