@@ -64,3 +64,15 @@
       (save-excursion
         (goto-char (- text-button 1))
         (notmuch-show-toggle-part-invisibility)))))
+
+(defun spacemacs/notmuch-show-decrypt-message ()
+  (interactive)
+  ;; make sure the content is not indented, as this confuses epa
+  (when notmuch-show-indent-content
+    (notmuch-show-toggle-thread-indentation))
+
+  ;; and don't ask, i know what i want to do
+  (cl-letf ((extent (notmuch-show-message-extent))
+            ((symbol-function 'y-or-n-p) #'(lambda (msg) t)))
+    (epa-decrypt-armor-in-region (car extent) (cdr extent))))
+
