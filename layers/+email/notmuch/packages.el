@@ -163,6 +163,9 @@
 
       (add-hook 'notmuch-show-hook 'turn-on-orgstruct-mode)
       (add-hook 'message-mode-hook 'turn-on-orgstruct-mode)
+
+      ;; XXX should be conditional on whether org is loaded
+      (require 'org-notmuch)
       )))
 
 
@@ -175,16 +178,12 @@
     :defer t
     :config
     (progn
-      (setq bbdb-user-mail-address-re "jonas.hoersch@|coroa|hoersch@|jonas@chaoflow"
-            bbdb-file "~/notes/.bbdb"
-            bbdb-auto-revert t
-            bbdb-check-auto-save-file t
-            bbdb-expand-mail-aliases t
-            bbdb-complete-mail-allow-cycling t
-            bbdb-phone-style nil
-            bbdb-pop-up-window-size 10)
-      )))
-
-
+      (setq-default
+       bbdb-auto-revert t
+       bbdb-check-auto-save-file t
+       bbdb-expand-mail-aliases t
+       bbdb-complete-mail-allow-cycling t
+       bbdb-phone-style nil
+       bbdb-pop-up-window-size 10))))
 
 ;;; packages.el ends here
