@@ -45,6 +45,7 @@
         (ox-jira :toggle org-enable-jira-support)
         (org-trello :toggle org-enable-trello-support)
         (org-sticky-header :toggle org-enable-sticky-header)
+        (org-crypt :location built-in)
         ))
 
 (defun org/post-init-company ()
@@ -797,3 +798,9 @@ Headline^^            Visit entry^^               Filter^^                    Da
     :defer t
     :init
     (add-hook 'org-mode-hook 'org-sticky-header-mode)))
+
+(defun org/init-org-crypt ()
+  (spacemacs|use-package-add-hook org
+    :post-config (progn
+                   (require 'org-crypt)
+                   (org-crypt-use-before-save-magic))))
