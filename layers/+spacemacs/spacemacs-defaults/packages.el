@@ -40,6 +40,7 @@
         (uniquify :location built-in)
         (url :location built-in)
         (visual-line-mode :location built-in)
+        visual-fill-column
         (whitespace :location built-in)
         (winner :location built-in)
         (zone :location built-in)
@@ -87,7 +88,15 @@
   (electric-indent-mode))
 
 (defun spacemacs-defaults/init-visual-line-mode ()
+  (add-hook 'text-mode-hook 'turn-on-visual-line-mode)
   (spacemacs|diminish visual-line-mode " Ⓛ" " L"))
+
+(defun spacemacs-defaults/init-visual-fill-column ()
+  (use-package visual-fill-column
+    :defer t
+    :after visual-line-mode
+    :commands (turn-on-visual-fill-column-mode)
+    :init (add-hook 'text-mode-hook 'turn-on-visual-fill-column-mode t)))
 
 ;; notes from mijoharas
 ;; We currently just set a few variables to make it look nicer.

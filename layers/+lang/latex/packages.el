@@ -226,3 +226,12 @@
             magic-latex-enable-pretty-symbols t
             magic-latex-enable-block-align nil
             magic-latex-enable-inline-image nil))))
+
+;; (defun latex/post-init-visual-fill-column ()
+;;   (use-package visual-fill-column
+;;     :defer t
+;;     :commands (turn-on-visual-fill-column-mode)
+;;     :init
+;;     (progn
+;;       (add-hook 'LaTeX-mode-hook 'turn-on-visual-fill-column-mode)
+;;       (add-hook 'LaTeX-mode-hook 'turn-on-visual-line-mode))))
