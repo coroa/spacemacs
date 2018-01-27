@@ -125,3 +125,29 @@ messages in the current thread"
   "Add buffer to notmuch layout."
   (persp-add-buffer (current-buffer)
                     (persp-get-by-name notmuch-spacemacs-layout-name)))
+
+
+;; own stuff
+(defun spacemacs/notmuch-show-decrypt-message ()
+  (interactive)
+  ;; make sure the content is not indented, as this confuses epa
+  (when notmuch-show-indent-content
+    (notmuch-show-toggle-thread-indentation))
+
+  ;; and don't ask, i know what i want to do
+  (cl-letf ((extent (notmuch-show-message-extent))
+            ((symbol-function 'y-or-n-p) #'(lambda (msg) t)))
+    (epa-decrypt-armor-in-region (car extent) (cdr extent))))
+
+(defun spacemacs/notmuch-unread (&optional arg)
+  (interactive "P")
+  (notmuch-search (concat "( tag:flagged or tag:unread"
+                          (unless arg " and tag:inbox")
+                          " )")))
+
+(defun spacemacs/notmuch-message-spam ()
+  (interactive)
+  (let* ((id (notmuch-search-find-thread-id))
+         (notmuch-cmd (concat "notmuch search --output=files " id)))
+    (shell-command (concat "rspamc learn_spam $(" notmuch-cmd ")")))
+  (notmuch-search-tag (list "-inbox" "+spam")))

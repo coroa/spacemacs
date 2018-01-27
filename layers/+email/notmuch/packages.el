@@ -17,6 +17,7 @@
         org
         persp-mode
         window-purpose
+        bbdb
         ))
 
 (defun notmuch/init-counsel-notmuch ()
@@ -37,6 +38,7 @@
     (progn
       (spacemacs/declare-prefix "aN" "notmuch")
       (spacemacs/set-leader-keys
+        "an"  'spacemacs/notmuch-unread
         "aNN" 'notmuch
         "aNi" 'spacemacs/notmuch-inbox
         "aNj" 'notmuch-jump-search
@@ -49,11 +51,6 @@
         (spacemacs/declare-prefix-for-mode 'notmuch-show-mode
           (car prefix) (cdr prefix)))
       ;; key bindings
-      (evil-define-key 'visual notmuch-search-mode-map
-        "*" 'notmuch-search-tag-all
-        "a" 'notmuch-search-archive-thread
-        "-" 'notmuch-search-remove-tag
-        "+" 'notmuch-search-add-tag)
       (spacemacs/set-leader-keys-for-major-mode 'notmuch-show-mode
         "a" 'notmuch-show-save-attachments
         ;; part
@@ -79,28 +76,38 @@
         ;; patch
         "Po" 'spacemacs/notmuch-show-open-github-patch
         "Pa" 'spacemacs/notmuch-git-apply-patch
-        "PA" 'spacemacs/notmuch-git-apply-patch-part)
+        "PA" 'spacemacs/notmuch-git-apply-patch-part
+        ;; navigation
+        "l" 'notmuch-show-filter-thread
+        "j" 'notmuch-jump-search)
+
       ;; evilified maps
       (evilified-state-evilify-map notmuch-hello-mode-map
         :mode notmuch-hello-mode)
       (evilified-state-evilify-map notmuch-show-mode-map
         :mode notmuch-show-mode
         :bindings
-        ;; In notmuch-show-mode n would be bound to `notmuch-show-next-message`
-        ;; but the evilified state moves the `n' bound function to C-n while
-        ;; it's counterpart `notmuch-show-previous-message` remains bound to
-        ;; `p'. Adding a binding for the previous function to `C-p' becomes
-        ;; handy while navigation messages back and forth.
-        (kbd "C-p")   'notmuch-show-previous-message
-        (kbd "n")   'notmuch-show-next-open-message
+        "n" 'notmuch-show-next-open-message
+        "C-n" 'notmuch-show-next-message
+        "N" 'notmuch-show-previous-open-message
+        "C-N" 'notmuch-show-previous-message
+        "L" 'notmuch-show-filter-thread
+        "J" 'notmuch-jump-search
         (kbd "o")   'notmuch-show-open-or-close-all
         (kbd "O")   'spacemacs/notmuch-show-close-all)
+
       (evilified-state-evilify-map notmuch-tree-mode-map
         :mode notmuch-tree-mode
         :bindings
         (kbd "d") 'spacemacs/notmuch-message-delete-down
         (kbd "D") 'spacemacs/notmuch-message-delete-up
         (kbd "M") 'compose-mail-other-frame)
+
+      (evil-define-key 'visual notmuch-search-mode-map
+        "*" 'notmuch-search-tag-all
+        "a" 'notmuch-search-archive-thread
+        "-" 'notmuch-search-remove-tag
+        "+" 'notmuch-search-add-tag)
       (evilified-state-evilify-map notmuch-search-mode-map
         :mode notmuch-search-mode
         :bindings
@@ -108,13 +115,90 @@
         (kbd "A") 'spacemacs/notmuch-search-archive-thread-up
         (kbd "d") 'spacemacs/notmuch-message-delete-down
         (kbd "D") 'spacemacs/notmuch-message-delete-up
+        (kbd "S") 'spacemacs/notmuch-message-spam
         (kbd "J") 'notmuch-jump-search
         (kbd "L") 'notmuch-search-filter
         (kbd "gg") 'notmuch-search-first-thread
         (kbd "gr") 'notmuch-refresh-this-buffer
         (kbd "gR") 'notmuch-refresh-all-buffers
         (kbd "G") 'notmuch-search-last-thread
-        (kbd "M") 'compose-mail-other-frame))))
+        (kbd "k") 'notmuch-search-previous-thread
+        (kbd "j") 'notmuch-search-next-thread
+        (kbd "N") 'notmuch-search-previous-thread
+        (kbd "n") 'notmuch-search-next-thread
+        (kbd "M") 'compose-mail-other-frame
+        (kdb "C-d") 'notmuch-search-scroll-down
+        (kbd "C-u") 'notmuch-search-scroll-up
+        )
+
+      (setq-default
+       notmuch-search-oldest-first nil
+       notmuch-show-all-multipart/alternative-parts nil
+       notmuch-crypto-process-mime t
+       mm-discouraged-alternatives '("text/html" "text/richtext")
+       mm-decrypt-option 'known
+       message-citation-line-function 'message-insert-formatted-citation-line)
+
+      (defadvice smtpmail-via-smtp
+          (around change-smtp-by-message-from-field (recipient buffer &optional ask) activate)
+        (with-current-buffer buffer
+          (loop with from = (save-excursion
+                              (save-restriction
+                                (message-narrow-to-headers)
+                                (message-fetch-field "from")))
+                for (addr fname server user service) in smtp-accounts
+                when (string-match addr from)
+                return (let ((user-mail-address addr)
+                             (user-full-name fname)
+                             (smtpmail-smtp-server server)
+                             (smtpmail-smtp-user user)
+                             (smtpmail-smtp-service service))
+                         ad-do-it)
+                finally do
+                (error (format (concat "address '%s' doesn't match"
+                                       " any entry from smtp-accounts.") from)))))
+
+      (setq-default
+       message-send-mail-function 'smtpmail-send-it
+       smtpmail-stream-type 'starttls
+       smtpmail-auth-credentials (expand-file-name "~/.authinfo.gpg")
+       mail-specify-envelope-from 'header
+       mml2015-sign-with-sender t
+       mml2015-encrypt-to-self t)
+
+;;; more visible faces for flagged, unread and deleted
+
+      (setq-default
+       notmuch-search-line-faces '(("unread" :weight bold)
+                                   ("flagged" :foreground "red")
+                                   ("deleted" :foreground "gray60")
+                                   ("spam" :foreground "gray60")))
+
+      ;; fixes: killing a notmuch buffer does not show the previous buffer
+      (add-to-list 'spacemacs-useful-buffers-regexp "\\*notmuch.+\\*")
+
+      ;;; epa mail mode for decrypting inline PGP
+      ;; (require 'epa-mail)
+      ;; (defun turn-on-epa-mail-mode ()
+      ;;   (epa-mail-mode t))
+      ;; (add-hook 'notmuch-show-hook 'turn-on-epa-mail-mode)
+      ;; (add-hook 'message-mode-hook 'turn-on-epa-mail-mode)
+
+      (spacemacs/set-leader-keys-for-minor-mode 'epa-mail-mode
+        "ed"  'spacemacs/notmuch-show-decrypt-message)
+
+      (setq notmuch-address-use-company nil
+            notmuch-address-command nil)
+      (bbdb-initialize 'gnus 'message)
+
+      (defun turn-on-orgstruct-mode ()
+        (orgstruct-mode t)
+        (set (make-local-variable 'org-footnote-auto-label) 'plain)
+        (local-set-key (kbd "C-c f") 'org-footnote-action))
+
+      (add-hook 'notmuch-show-hook 'turn-on-orgstruct-mode)
+      (add-hook 'message-mode-hook 'turn-on-orgstruct-mode)
+      )))
 
 (defun notmuch/pre-init-org ()
   (spacemacs|use-package-add-hook org
@@ -140,3 +224,16 @@
     :pre-config
     (dolist (mode notmuch-modes)
       (add-to-list 'purpose-user-mode-purposes (cons mode 'mail)))))
+
+(defun notmuch/init-bbdb ()
+  (use-package bbdb
+    :defer t
+    :config
+    (progn
+      (setq-default
+       bbdb-auto-revert t
+       bbdb-check-auto-save-file t
+       bbdb-expand-mail-aliases t
+       bbdb-complete-mail-allow-cycling t
+       bbdb-phone-style nil
+       bbdb-pop-up-window-size 10))))
