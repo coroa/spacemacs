@@ -127,7 +127,7 @@
         (kbd "N") 'notmuch-search-previous-thread
         (kbd "n") 'notmuch-search-next-thread
         (kbd "M") 'compose-mail-other-frame
-        (kdb "C-d") 'notmuch-search-scroll-down
+        (kbd "C-d") 'notmuch-search-scroll-down
         (kbd "C-u") 'notmuch-search-scroll-up
         )
 
@@ -202,7 +202,9 @@
 
 (defun notmuch/pre-init-org ()
   (spacemacs|use-package-add-hook org
-    :post-config (require 'org-notmuch)))
+    :post-config
+    (require 'org-notmuch)
+    (require 'org-footnote)))
 
 (defun notmuch/pre-init-persp-mode ()
   (spacemacs|use-package-add-hook persp-mode
