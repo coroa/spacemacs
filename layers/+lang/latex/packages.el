@@ -27,6 +27,7 @@
         typo
         yasnippet
         which-key
+        cdlatex
         ))
 
 (defun latex/init-auctex ()
@@ -226,6 +227,9 @@
             magic-latex-enable-pretty-symbols t
             magic-latex-enable-block-align nil
             magic-latex-enable-inline-image nil))))
+
+(defun latex/init-cdlatex ()
+  (use-package cdlatex))
 
 ;; (defun latex/post-init-visual-fill-column ()
 ;;   (use-package visual-fill-column
