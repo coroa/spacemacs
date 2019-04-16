@@ -196,8 +196,10 @@
         (set (make-local-variable 'org-footnote-auto-label) 'plain)
         (local-set-key (kbd "C-c f") 'org-footnote-action))
 
-      (add-hook 'notmuch-show-hook 'turn-on-orgstruct-mode)
-      (add-hook 'message-mode-hook 'turn-on-orgstruct-mode)
+      ;; TODO port to current thing
+
+      ;; (add-hook 'notmuch-show-hook 'turn-on-orgstruct-mode)
+      ;; (add-hook 'message-mode-hook 'turn-on-orgstruct-mode)
       )))
 
 (defun notmuch/pre-init-org ()
